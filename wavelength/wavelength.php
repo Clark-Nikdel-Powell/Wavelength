@@ -4,7 +4,7 @@
     Plugin Name: Wavelength
     Plugin URI: http://clarknikdelpowell.com
     Version: 0.1.0
-    Description: Provides additional media filters with automatic mime type detection. Filters all the things!
+    Description: Provides additional media filters with automatic mime type detection.
     Author: Glenn Welser
     Author URI: http://clarknikdelpowell.com/agency/people/glenn/
 
@@ -33,18 +33,19 @@ final class CNP_Wavelength {
     public static function modify_post_mime_types( $post_mime_types ) {
         
         global $wpdb;
-        $results = $wpdb->get_results( 
+        $mimetypes = $wpdb->get_results( 
             "
             SELECT post_mime_type, substring_index(guid,'.',-1) AS ext 
             FROM $wpdb->posts 
             WHERE post_type='attachment' ORDER BY ext
-            "
+            ",
+			OBJECT_K
         );
-        if ($results == null) {
+		
+        if ($mimetypes == null) {
             return $post_mime_types;
         }
         
-        $mimetypes = array_unique($results);
         foreach ($mimetypes as $m)
         {
             $mime_type = $m->post_mime_type;
