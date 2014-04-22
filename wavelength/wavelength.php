@@ -26,33 +26,38 @@
 
 final class CNP_Wavelength {
 
-    public static function activation() {
-        /* PLUGIN ACTIVATION LOGIC HERE */
-    }
-
-    public static function deactivation() {
-        /* PLUGIN DEACTIVATION LOGIC HERE */
-    }
-
-    public static function uninstall() {
-        /* PLUGIN DELETION LOGIC HERE */
-    }
-
     public static function initialize() {
-        // Add Filter Hook
         add_filter( 'post_mime_types', array(__CLASS__, 'modify_post_mime_types') );
     }
     
     public static function modify_post_mime_types( $post_mime_types ) {
         
         global $wpdb;
-        $mimetypes = $wpdb->get_results( "SELECT DISTINCT post_mime_type, substring_index(guid,'.',-1) AS ext FROM wp_posts WHERE post_type='attachment' ORDER BY ext" );
+        $results = $wpdb->get_results( 
+            "
+            SELECT post_mime_type, substring_index(guid,'.',-1) AS ext 
+            FROM $wpdb->posts 
+            WHERE post_type='attachment' ORDER BY ext
+            "
+        );
+        if ($results == null) {
+            return $post_mime_types;
+        }
+        
+        $mimetypes = array_unique($results);
         foreach ($mimetypes as $m)
         {
             $mime_type = $m->post_mime_type;
-            $mime_ext = $m->ext;
-            $mime_name = strtoupper( $mime_ext );
-            $post_mime_types[$mime_type] = array( __( $mime_name ), __( 'Manage '.$mime_name.'s' ), _n_noop( $mime_name.' <span class="count">(%s)</span>', $mime_name.'s <span class="count">(%s)</span>' ) );
+            $mime_ext = strtoupper( $m->ext );
+            
+            $post_mime_types[$mime_type] = array( 
+                __( $mime_ext ), 
+                __( 'Manage '.$mime_ext.'s' ), 
+                _n_noop( 
+                    $mime_ext.' <span class="count">(%s)</span>', 
+                    $mime_ext.'s <span class="count">(%s)</span>' 
+                )
+            );
         }
         return $post_mime_types;
         
@@ -60,7 +65,4 @@ final class CNP_Wavelength {
     
 }
 
-register_activation_hook(__FILE__, array('CNP_Wavelength', 'activation'));
-register_deactivation_hook(__FILE__, array('CNP_Wavelength', 'deactivation'));
-register_uninstall_hook(__FILE__, array('CNP_Wavelength', 'uninstall'));
 CNP_Wavelength::initialize();
